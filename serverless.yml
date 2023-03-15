@@ -1,0 +1,74 @@
+app: lambda-qatar-test-local
+service: lambda-qatar-test-local
+frameworkVersion: '3'	
+useDotenv: true
+
+provider:
+  name: aws
+  runtime: python3.7
+  stage: ${opt:stage, 'dev'}
+  region: us-east-1
+
+  stackTags: 
+    STACK : lambda-qatar-token-security
+
+  iam:
+    role:
+      statements:
+        - Effect: "Allow"
+          Action:
+            - "secretsmanager:GetSecretValue"
+          Resource: "arn:aws:secretsmanager:*:${aws:accountId}:secret:*"
+
+        - Effect: "Allow"
+          Action:
+            - "s3:GetObject"
+          Resource: "arn:aws:s3:::${env:S3_BUCKET}/*"
+
+
+
+  environment:
+    S3_BUCKET: ${env:S3_BUCKET}
+    MEDIASTREAM_ID: ${env:MEDIASTREAM_ID}
+    LANDING_PAGE: ${env:LANDING_PAGE}
+    SECRET_NAME: ${env:SECRET_NAME}
+    
+
+resources:
+  Resources:
+    MySecretA:
+      Type: 'AWS::SecretsManager::Secret'
+      Properties:
+        Name: ${env:SECRET_NAME}
+        Description: "secreto generado en serverless."
+        SecretString: '{"api-authorization-token":"${env:MS_AUTHORIZATION_TOKEN}"}'
+
+
+
+functions:
+  hello:
+    handler: handler.hello
+    events:
+      - httpApi:
+          method: get
+          path: /
+          
+
+
+package:
+  exclude:
+    - node_modules/**
+    - .git/**
+    - .gitignore
+
+plugins:
+  - serverless-offline
+  - serverless-api-gateway-throttling
+
+
+custom:
+  # Configures throttling settings for the API Gateway stage
+  # They apply to all http endpoints, unless specifically overridden
+  apiGatewayThrottling:
+    maxRequestsPerSecond: 1000
+    maxConcurrentRequests: 500

@@ -1,0 +1,6 @@
+{
+  "devDependencies": {
+    "serverless-api-gateway-throttling": "^2.0.2",
+    "serverless-offline": "^11.1.3"
+  }
+}
